@@ -1,0 +1,5 @@
+fastapi
+#FastAPI Server
+uvicorn
+#Data Validation Library
+pydantic
