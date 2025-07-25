@@ -8,12 +8,6 @@ class Patient(BaseModel):
     married: bool = False
     allergies: Optional[List[str]] = None
     contact_details: Dict[str, str]
-    
-def insert_patient_name(patient: Patient):
-    print(patient.name)
-    print(patient.age)
-    print('inserted')
-
 
 def update_patient_name(patient: Patient):
     print(patient.name)
