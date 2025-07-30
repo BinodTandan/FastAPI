@@ -2,7 +2,7 @@ from fastapi import FastAPI, Path, HTTPException, Query
 from fastapi.responses import JSONResponse
 import json
 from pydantic import BaseModel, computed_field, Field
-from typing import Annotated, Literal
+from typing import Annotated, Literal, Optional
 
 class Patient(BaseModel):  
     id: Annotated[str, Field(..., description="ID of the patient", examples=['P001'])]
@@ -28,7 +28,16 @@ class Patient(BaseModel):
             return 'Normal'
         else:
             return 'Overweight'
-        
+
+
+class PatientUpdate(BaseModel):
+    name: Annotated[Optional[str], Field(default=None)]
+    city: Annotated[Optional[str], Field(default=None)]
+    age: Annotated[Optional[int], Field(default=None)]
+    gender: Annotated[Optional[Literal['Male', 'Female', 'Others']], Field(default=None)]
+    height: Annotated[Optional[float], Field(default=None, gt=0)]
+    weight: Annotated[Optional[float], Field(default=None, gt=0)]
+           
         
 app = FastAPI()
 
@@ -104,3 +113,34 @@ def create_patient(patient: Patient):
     save_data(data)  
     
     return JSONResponse(status_code=201, content={'message': 'patient created successfully'}) 
+
+
+@app.put('/edit/{patient_id}')
+def update_patient(patient_id: str, patient_update: PatientUpdate):
+    
+    data = load_data()
+    
+    if patient_id not in data:
+        raise HTTPException(status_code=404, detail="Patient not found")
+    
+    existing_patient_info = data[patient_id]
+    
+    patient_item_dict = patient_update.model_dump(exclude_unset= True)
+    
+    for key, value in patient_item_dict.items():
+        existing_patient_info[key] = value
+    #exising_patient_info -> pydantic object -> updated bmi + verdict
+    existing_patient_info['id'] = patient_id    
+    patient_pydantic_obj = Patient(**existing_patient_info)
+    
+    #pydantic object -> dict
+    patient_pydantic_obj.model_dump(exclude='id')
+    
+    # add this dict to data
+    data[patient_id] = existing_patient_info
+    
+    #save data
+    save_data(data)
+    
+    return JSONResponse(status_code=201, content={'message': 'patient updated'}) 
+    
